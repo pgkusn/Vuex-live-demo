@@ -1,84 +1,32 @@
 <script>
 import axios from 'axios';
 import LoadinPage from "./components/LoadinPage.vue";
+import ShowImg from './components/ShowImg.vue'
+import NavBar from './components/NavBar.vue'
 export default {
     name: 'app',
     components:{
-        LoadinPage
+        LoadinPage,
+        ShowImg,
+        NavBar,
     },
-    data(){
-        return{
-            imgIdx: 0,
-            slidList: [],
-            timer: null,
-            isLoad: true,
-        }
-    },
-    computed:{
-        imgSrc(){
-            return this.slidList[this.imgIdx];
-        }
-    }, 
-    methods:{
-        menuActive(idx){
-            this.imgIdx = idx;
-            this.handCloseTimer();
-            this.handChangeImg();
-        },
-        handChangeImg(){
-            this.timer = setInterval(()=>{
-                this.imgIdx ++;
-                if(this.imgIdx > this.slidList.length - 1){
-                    this.imgIdx = 0;
-                }
-            }, 3000);
-        },
-        handCloseTimer(){
-            clearInterval(this.timer);
+    computed: {
+        isLoad(){
+            return this.$store.getters.isLoad;
         }
     },
     mounted() {
-        let loadingIdx = 0;
-        axios.get("/api/show").then(res=> {
-            const arr = [];
-            res.data.data.forEach(item=>{
-                const img = new Image();
-                img.src = item.src;
-                img.onload = () =>{
-                    loadingIdx++;
-                    arr.push(img.src);
-                    if(loadingIdx === res.data.data.length){
-                        this.isLoad = false;
-                    }
-                }
-            })
-            this.slidList = arr;
-            this.handChangeImg();
-        })
-        .catch(err=> {
-            console.log(err);
-        })
+        this.$store.dispatch('getImgData');
     },
     destroyed(){
-        this.handCloseTimer();
+        this.$store.dispatch('handCloseTimer');
     }
 }
 </script>
 <template>
   <div id="app">
-    <div class="mid">
-        <img v-show="!isLoad" :src="imgSrc">
-    </div>
-    <nav>
-        <a
-            v-for="(item, idx) in slidList"
-            :key="item.src"
-            :class="{active: imgIdx === idx}"
-            @click="menuActive(idx)"
-        >
-        {{idx + 1}}
-        </a>
-    </nav>
+    <show-img></show-img>
+    <nav-bar></nav-bar>
     <LoadinPage v-show="isLoad" />
   </div>
 </template>
@@ -100,26 +48,5 @@ export default {
     }
     #app{
         text-align: center;
-    }
-    img{
-        border-radius: 50%;
-        margin-bottom: 20px;
-    }
-    nav{
-        text-align: center
-    }
-    nav > a{
-        cursor: pointer;
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        border-radius: 50px;
-        margin: 5px;
-        background-color: white;
-        line-height: 30px;
-    }
-    nav > a.active{
-        color: #fff;
-        background-color: #40c297;
     }
 </style>
